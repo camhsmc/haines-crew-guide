@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1F3A5F">
+<title>Crew Guide — Haines Harbor</title>
+<style>
+  /* ---- Design tokens (match the printed guide) ---- */
+  :root{
+    --navy:#1F3A5F;
+    --sand:#F4ECD8;
+    --gold:#B8893B;
+    --ink:#16263d;          /* deep-navy text */
+    --card:#fffdf7;
+    --line:#e6dcc4;
+    --muted:#6b7790;
+    --good:#2f7d52;
+    --tabbar:72px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--sand);
+    color:var(--ink);
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(var(--tabbar) + env(safe-area-inset-bottom));
+  }
+  h1,h2,h3{margin:0;font-weight:700}
+  button{font-family:inherit;cursor:pointer}
+
+  /* ---- Header ---- */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:var(--navy);color:#fff;
+    padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  header .hi{font-size:13px;letter-spacing:.5px;text-transform:uppercase;color:#cdd8ea;opacity:.9}
+  header .name{font-size:22px;margin-top:2px}
+  header .meta{font-size:13px;color:#dbe4f1;margin-top:4px}
+  header .switch{
+    position:absolute;top:calc(14px + env(safe-area-inset-top));right:16px;
+    background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:20px;
+    font-size:12px;padding:7px 12px;
+  }
+
+  /* ---- Content ---- */
+  main{padding:16px 16px 24px;max-width:560px;margin:0 auto}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(31,58,95,.06);
+  }
+  .card h2{font-size:17px;color:var(--navy)}
+  .card h3{font-size:15px;color:var(--navy)}
+  .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--gold);font-weight:700;margin-bottom:6px}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+
+  /* banners / callouts */
+  .banner{
+    border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:14px;
+    display:flex;gap:10px;align-items:flex-start;line-height:1.4;
+  }
+  .banner b{font-weight:700}
+  .banner.fish{background:#e8f3ee;border:1px solid #bfe0cf;color:#1d5e3c}
+  .banner.heads{background:#fdf3e0;border:1px solid #f0d9a8;color:#7a591b}
+  .banner .ico{font-size:18px;line-height:1.2}
+
+  /* timeline */
+  .tl{list-style:none;margin:6px 0 0;padding:0}
+  .tl li{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+  .tl li:first-child{border-top:none}
+  .tl .t{flex:0 0 88px;font-weight:700;font-size:13px;color:var(--navy)}
+  .tl .w{flex:1}
+  .tl .w .note{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+  /* dinner card */
+  .dinner{border-left:4px solid var(--gold)}
+  .dinner .title{font-size:16px;font-weight:700;color:var(--navy);margin-top:2px}
+  .dinner .instr{font-size:14px;margin-top:6px}
+  .flag{
+    display:inline-flex;gap:6px;align-items:center;margin-top:10px;
+    background:#e8f3ee;color:#1d5e3c;border:1px solid #bfe0cf;
+    border-radius:20px;padding:5px 11px;font-size:12.5px;font-weight:600;
+  }
+  .nocook{display:inline-block;margin-top:8px;background:#eef1f6;color:var(--navy);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}
+
+  /* week accordion */
+  .day{margin-bottom:12px}
+  .day .head{
+    width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  }
+  .day .head .lbl{font-weight:700;color:var(--navy);font-size:15px}
+  .day .head .sum{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .day .head .chev{color:var(--gold);font-size:13px;flex:0 0 auto}
+  .day .body{padding:4px 4px 0}
+  .day.today .head{border-color:var(--gold);box-shadow:0 0 0 2px rgba(184,137,59,.18)}
+  .pill{display:inline-block;background:var(--gold);color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:10px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+
+  /* kids */
+  .kid{display:flex;gap:14px;align-items:flex-start}
+  .kid .avatar{
+    flex:0 0 46px;height:46px;border-radius:50%;background:var(--navy);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;
+  }
+  .kid .age{font-size:12px;color:var(--gold);font-weight:700}
+  .kid .bed{font-size:13px;color:var(--navy);margin-top:6px}
+  .kid .bed b{font-weight:700}
+
+  /* reference */
+  .ref h3{margin-bottom:6px}
+  .strike{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+  .strike:first-of-type{border-top:none}
+  .strike .n{flex:0 0 22px;font-weight:700;color:var(--gold)}
+  .ref ul{margin:6px 0 0;padding-left:18px}
+  .ref li{margin-bottom:4px;font-size:14px}
+  .loc{padding:10px 0;border-top:1px solid var(--line)}
+  .loc:first-of-type{border-top:none}
+  .loc b{color:var(--navy)}
+  .loc .addr{font-size:13px;color:var(--muted)}
+  .contact{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+  .contact:first-of-type{border-top:none}
+  .contact .who b{color:var(--navy)}
+  .contact .who .role{font-size:12.5px;color:var(--muted)}
+  .contact a{color:var(--gold);font-weight:700;text-decoration:none;font-size:14px;white-space:nowrap}
+
+  /* note form */
+  textarea,input{
+    width:100%;font-family:inherit;font-size:15px;border:1px solid var(--line);
+    border-radius:10px;padding:11px;background:#fff;color:var(--ink);
+  }
+  textarea{min-height:90px;resize:vertical}
+  .btn{
+    background:var(--navy);color:#fff;border:none;border-radius:10px;
+    padding:13px;font-size:15px;font-weight:700;width:100%;margin-top:10px;
+  }
+  .btn:disabled{opacity:.5}
+  .btn.gold{background:var(--gold)}
+  .notemsg{font-size:13px;margin-top:8px}
+
+  /* parent notes list */
+  .pnote{border-top:1px solid var(--line);padding:10px 0}
+  .pnote:first-of-type{border-top:none}
+  .pnote .meta{font-size:12px;color:var(--muted)}
+
+  /* ---- Bottom tab bar ---- */
+  nav.tabs{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:#fff;border-top:1px solid var(--line);
+    display:flex;height:calc(var(--tabbar) + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav.tabs button{
+    flex:1;background:none;border:none;color:var(--muted);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    font-size:11px;font-weight:600;padding:8px 0;
+  }
+  nav.tabs button .ti{font-size:20px;line-height:1}
+  nav.tabs button.active{color:var(--navy)}
+  nav.tabs button.active .ti{transform:translateY(-1px)}
+
+  /* ---- Persona overlay ---- */
+  .overlay{
+    position:fixed;inset:0;z-index:50;background:var(--navy);
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:28px;text-align:center;color:#fff;
+  }
+  .overlay .logo{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .overlay h1{font-size:26px;margin:10px 0 6px}
+  .overlay p{color:#cdd8ea;margin:0 0 26px;font-size:15px}
+  .picks{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px}
+  .picks button{
+    background:var(--sand);color:var(--navy);border:none;border-radius:14px;
+    padding:18px;font-size:18px;font-weight:700;display:flex;justify-content:space-between;align-items:center;
+  }
+  .picks button .sub{font-size:12px;font-weight:600;color:var(--muted)}
+  .picks button.parent{background:rgba(255,255,255,.12);color:#fff}
+  .picks button.parent .sub{color:#cdd8ea}
+
+  .loading{text-align:center;color:var(--muted);padding:40px 0}
+  .err{background:#fbeaea;border:1px solid #e7b8b8;color:#9a2b2b;border-radius:12px;padding:14px;font-size:14px}
+</style>
+</head>
+<body>
+
+<div id="overlay" class="overlay" style="display:none">
+  <div class="logo">Haines Harbor</div>
+  <h1>Crew Guide</h1>
+  <p>Thanks for helping with the kids this week.<br>Who are you?</p>
+  <div class="picks" id="picks"></div>
+</div>
+
+<header id="header" style="display:none">
+  <button class="switch" onclick="resetPersona()">Switch</button>
+  <div class="hi" id="h-hi">Welcome</div>
+  <div class="name" id="h-name"></div>
+  <div class="meta" id="h-meta"></div>
+</header>
+
+<main id="view"></main>
+
+<nav class="tabs" id="tabs" style="display:none">
+  <button data-tab="today" onclick="go('today')"><span class="ti">📅</span>Today</button>
+  <button data-tab="week"  onclick="go('week')"><span class="ti">🗓️</span>Week</button>
+  <button data-tab="kids"  onclick="go('kids')"><span class="ti">🧒</span>Kids</button>
+  <button data-tab="ref"   onclick="go('ref')"><span class="ti">📖</span>Reference</button>
+</nav>
+
+<script>
+/* ============================================================
+   Crew Guide — Haines Harbor "visiting crew" week
+   Single-file vanilla JS. Data from Supabase (hh_niece_* tables
+   + live dinners from hh_meal_plan). localStorage holds ONLY the
+   persona choice.
+   ============================================================ */
+
+const SUPA_URL = "https://optzbdbavpnxstpxrpbh.supabase.co";
+const SUPA_KEY = "sb_publishable_OujPUygbQI0CuYbrOub5kg_ExbErjAZ";
+const HDRS = { apikey: SUPA_KEY, Authorization: "Bearer " + SUPA_KEY };
+
+const WEEK_START = "2026-06-22";   // Mon
+const WEEK_END   = "2026-06-27";   // Sat
+const PERSONA_KEY = "crew_persona";
+
+const state = { persona:null, tab:"today", today:null, data:null, noteSent:false };
+
+/* ---- date helpers ---- */
+function todayCentral(){
+  // ?date=YYYY-MM-DD override for testing, else current date in Central time
+  const q = new URLSearchParams(location.search).get("date");
+  if(q && /^\d{4}-\d{2}-\d{2}$/.test(q)) return q;
+  return new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
+}
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---- Supabase fetch ---- */
+async function getJSON(path){
+  const r = await fetch(SUPA_URL + "/rest/v1/" + path, { headers: HDRS });
+  if(!r.ok) throw new Error(path + " → " + r.status);
+  return r.json();
+}
+async function loadData(){
+  const dinnerQ = "hh_meal_plan?select=meal_date,recipe_title,notes,recipe_id"
+    + "&meal_type=eq.dinner"
+    + "&notes=ilike." + encodeURIComponent("NIECE WEEK*")
+    + "&meal_date=gte." + WEEK_START + "&meal_date=lte." + WEEK_END
+    + "&order=meal_date";
+  const [people,kids,days,locations,contacts,dinners] = await Promise.all([
+    getJSON("hh_niece_people?select=*&order=sort"),
+    getJSON("hh_niece_kids?select=*&order=sort"),
+    getJSON("hh_niece_days?select=*&order=day_date"),
+    getJSON("hh_niece_locations?select=*&order=id"),
+    getJSON("hh_niece_contacts?select=*&order=sort"),
+    getJSON(dinnerQ),
+  ]);
+  const dinnerByDate = {};
+  dinners.forEach(d => dinnerByDate[d.meal_date] = d);
+  return { people, kids, days, locations, contacts, dinnerByDate };
+}
+
+/* ---- dinner note cleaning ----
+   Strip the "NIECE WEEK Day N —" prefix and remove the stale
+   Wednesday line ("Cam at YM/YW... Kara assembles. Easy.") — Cam is
+   home all week and Kara is away, so that sentence is wrong. */
+function cleanDinnerNote(note){
+  if(!note) return "";
+  let t = note.replace(/^NIECE WEEK Day \d+\s*[—\-]\s*/i, "");
+  t = t.replace(/\bCam at YM\/YW[^.]*\.\s*(Easy\.?)?/i, "");
+  return t.replace(/\s{2,}/g," ").trim();
+}
+
+/* ---- persona helpers ---- */
+function activePerson(){
+  if(!state.data || state.persona==="Parent") return null;
+  return state.data.people.find(p => p.name === state.persona) || null;
+}
+function isPescatarian(){
+  const p = activePerson();
+  return !!(p && p.dietary && /pescatarian/i.test(p.dietary));
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function dinnerCard(date){
+  const d = state.data.dinnerByDate[date];
+  if(!d) return `<div class="card dinner"><div class="eyebrow">Dinner</div><div class="muted small">No dinner on the plan for this day.</div></div>`;
+  const instr = cleanDinnerNote(d.notes);
+  const noCook = !d.recipe_id;  // Tue picnic / Fri pizza have no recipe_id — still real dinners
+  const fishFlag = isPescatarian()
+    ? `<div class="flag">🐟 Pescatarian — fish/seafood is fine, no other meat. Check the note above.</div>` : "";
+  return `<div class="card dinner">
+      <div class="eyebrow">Tonight's Dinner</div>
+      <div class="title">${esc(d.recipe_title)}</div>
+      ${noCook?`<span class="nocook">No cooking</span>`:""}
+      ${instr?`<div class="instr">${esc(instr)}</div>`:""}
+      ${fishFlag}
+    </div>`;
+}
+
+function timeline(day){
+  const items = (day.schedule||[]).map(s => `
+    <li><div class="t">${esc(s.time)}</div>
+        <div class="w">${esc(s.what)}${s.note?`<div class="note">${esc(s.note)}</div>`:""}</div></li>`).join("");
+  return items ? `<ul class="tl">${items}</ul>` : `<div class="muted small">Open day — no fixed schedule.</div>`;
+}
+
+function headsUp(day){
+  if(!day || !day.heads_up) return "";
+  return `<div class="banner heads"><span class="ico">⚠️</span><div><b>Heads up.</b> ${esc(day.heads_up)}</div></div>`;
+}
+
+function pescBanner(){
+  if(!isPescatarian()) return "";
+  return `<div class="banner fish"><span class="ico">🐟</span><div><b>Pescatarian reminder.</b> ${esc(state.persona)} eats fish &amp; seafood but no other meat. Each dinner card flags what to watch for.</div></div>`;
+}
+
+function renderToday(){
+  const day = state.data.days.find(d => d.day_date === state.today);
+  if(!day){
+    const first = state.data.days[0], last = state.data.days[state.data.days.length-1];
+    const before = state.today < first.day_date;
+    return `${pescBanner()}
+      <div class="card">
+        <div class="eyebrow">Today</div>
+        <h2>${before?"The crew week hasn't started yet":"The crew week is wrapped"}</h2>
+        <p class="muted small">Today is ${esc(state.today)}. The guide covers Mon Jun 22 – Sat Jun 27. Tap <b>Week</b> to see every day.</p>
+      </div>`;
+  }
+  return `${pescBanner()}${headsUp(day)}
+    <div class="card">
+      <div class="eyebrow">${esc(day.label)} · ${esc(state.today)}</div>
+      <h2>${esc(day.summary)}</h2>
+      ${timeline(day)}
+    </div>
+    ${dinnerCard(state.today)}`;
+}
+
+function renderHome(){ /* folded into header + today */ }
+
+function renderWeek(){
+  return state.data.days.map(day=>{
+    const isToday = day.day_date === state.today;
+    const open = isToday;
+    return `<div class="day ${isToday?'today':''}">
+      <button class="head" onclick="toggleDay(this)" aria-expanded="${open}">
+        <span><span class="lbl">${esc(day.label)}${isToday?'<span class="pill">Today</span>':''}</span>
+        <span class="sum">${esc(day.summary)}</span></span>
+        <span class="chev">${open?'▲':'▼'}</span>
+      </button>
+      <div class="body" style="display:${open?'block':'none'}">
+        ${headsUp(day)}
+        ${timeline(day)}
+        ${dinnerCard(day.day_date)}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function toggleDay(btn){
+  const body = btn.nextElementSibling;
+  const open = body.style.display!=="none";
+  body.style.display = open ? "none" : "block";
+  btn.querySelector(".chev").textContent = open ? "▼" : "▲";
+  btn.setAttribute("aria-expanded", String(!open));
+}
+
+function renderKids(){
+  return state.data.kids.map(k=>`
+    <div class="card"><div class="kid">
+      <div class="avatar">${esc(k.name[0])}</div>
+      <div style="flex:1">
+        <h3>${esc(k.name)} <span class="age">· ${esc(k.age)}</span></h3>
+        <div class="small" style="margin-top:4px">${esc(k.blurb)}</div>
+        <div class="bed">🌙 <b>Bedtime:</b> ${esc(k.bedtime)}</div>
+      </div>
+    </div></div>`).join("");
+}
+
+function renderRef(){
+  const loc = state.data.locations.map(l=>`
+    <div class="loc"><b>${esc(l.name)}</b>${l.note?` <span class="muted small">— ${esc(l.note)}</span>`:""}
+      <div class="addr">${esc(l.address)}</div></div>`).join("");
+  const contacts = state.data.contacts.map(c=>{
+    const tel = c.phone ? `<a href="tel:${esc(c.phone.replace(/[^0-9+]/g,''))}">${esc(c.phone)}</a>` : `<span class="muted small">ask Cam</span>`;
+    return `<div class="contact"><div class="who"><b>${esc(c.name)}</b><div class="role">${esc(c.role)}${c.note?` · ${esc(c.note)}`:""}</div></div>${tel}</div>`;
+  }).join("");
+
+  const strikes = [
+    "Getting up without asking","Too loud","Touching another kid",
+    "Negative food comments","Throwing food","Talking to Alexa during the meal"
+  ].map((s,i)=>`<div class="strike"><div class="n">•</div><div>${s}</div></div>`).join("");
+
+  return `
+    <div class="card ref">
+      <div class="eyebrow">Daily Rhythm</div>
+      <h3>Mornings</h3>
+      <ul><li>Kids wake on their own → breakfast.</li>
+        <li>Boys to summer school: Theo drop ~8:15, Oliver ~8:50.</li>
+        <li>Sunscreen + water bottles.</li>
+        <li>Pickup: Oliver 12:00, Theo 12:15.</li>
+        <li>Girls stay home — easy play, library, backyard.</li></ul>
+      <h3 style="margin-top:12px">Evenings</h3>
+      <ul><li>Dinner ~5:30.</li>
+        <li>Girls bed ~7:00 — bath, jammies, 2 books, prayers. Gemma needs a diaper + blanket.</li>
+        <li>Boys bed ~7:45 — read, prayers, lights out.</li></ul>
+    </div>
+
+    <div class="card ref">
+      <div class="eyebrow">Mealtime Strike System</div>
+      <p class="small" style="margin:0 0 6px">Each kid starts every meal at <b>0 strikes</b>. Resets each meal. A strike for:</p>
+      ${strikes}
+      <p class="small" style="margin-top:10px"><b>3 strikes</b> = no dessert. &nbsp; <b>4 strikes</b> = excused + an extra chore tomorrow.</p>
+    </div>
+
+    <div class="card ref">
+      <div class="eyebrow">Locations</div>${loc}
+    </div>
+
+    <div class="card ref">
+      <div class="eyebrow">Contacts</div>${contacts}
+    </div>
+
+    <div class="card ref">
+      <div class="eyebrow">Leave a note for Cam</div>
+      ${state.persona==="Parent"
+        ? `<p class="small muted">Notes from the crew show up here.</p><div id="parentNotes" class="small muted">Loading…</div>`
+        : `<p class="small muted">Question, heads-up, or anything you want me to know.</p>
+           <textarea id="noteBody" placeholder="Type your note…"></textarea>
+           <button class="btn gold" id="noteBtn" onclick="sendNote()">Send to Cam</button>
+           <div class="notemsg" id="noteMsg"></div>`}
+    </div>`;
+}
+
+async function sendNote(){
+  const ta = document.getElementById("noteBody");
+  const msg = document.getElementById("noteMsg");
+  const body = (ta.value||"").trim();
+  if(!body){ msg.textContent="Write something first."; msg.style.color="#9a2b2b"; return; }
+  document.getElementById("noteBtn").disabled = true;
+  try{
+    const r = await fetch(SUPA_URL+"/rest/v1/hh_niece_notes",{
+      method:"POST",
+      headers:{...HDRS,"Content-Type":"application/json","Prefer":"return=minimal"},
+      body:JSON.stringify({niece:state.persona, body})
+    });
+    if(!r.ok) throw new Error(r.status);
+    ta.value=""; msg.textContent="Sent — thanks! Cam will see it."; msg.style.color="var(--good)";
+  }catch(e){
+    msg.textContent="Couldn't send. Check your connection and try again."; msg.style.color="#9a2b2b";
+  }finally{
+    document.getElementById("noteBtn").disabled = false;
+  }
+}
+
+async function loadParentNotes(){
+  const box = document.getElementById("parentNotes");
+  if(!box) return;
+  try{
+    const notes = await getJSON("hh_niece_notes?select=*&order=created_at.desc");
+    if(!notes.length){ box.innerHTML = "No notes yet."; return; }
+    box.innerHTML = notes.map(n=>{
+      const when = new Date(n.created_at).toLocaleString("en-US",{timeZone:"America/Chicago",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+      return `<div class="pnote"><div>${esc(n.body)}</div><div class="meta">— ${esc(n.niece)} · ${esc(when)}</div></div>`;
+    }).join("");
+  }catch(e){ box.innerHTML = "Couldn't load notes."; }
+}
+
+/* ============================================================
+   SHELL / NAV
+   ============================================================ */
+function renderHeader(){
+  const p = activePerson();
+  const h = document.getElementById("header");
+  h.style.display = "block";
+  if(state.persona==="Parent"){
+    document.getElementById("h-hi").textContent = "Parent preview";
+    document.getElementById("h-name").textContent = "Cam";
+    document.getElementById("h-meta").textContent = "Seeing the guide as the crew sees it.";
+  }else if(p){
+    document.getElementById("h-hi").textContent = "Welcome";
+    document.getElementById("h-name").textContent = "Hi, " + p.name + " 👋";
+    document.getElementById("h-meta").innerHTML = `Arrives ${esc(p.arrives)} · Departs ${esc(p.departs)}`;
+  }
+}
+
+function renderTab(){
+  const v = document.getElementById("view");
+  let html = "";
+  if(state.tab==="today") html = renderToday();
+  else if(state.tab==="week") html = renderWeek();
+  else if(state.tab==="kids") html = renderKids();
+  else if(state.tab==="ref") html = renderRef();
+  v.innerHTML = html;
+  document.querySelectorAll("nav.tabs button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab===state.tab);
+  });
+  if(state.tab==="ref" && state.persona==="Parent") loadParentNotes();
+  window.scrollTo(0,0);
+}
+
+function go(tab){ state.tab=tab; renderTab(); }
+
+/* ---- persona selection ---- */
+function buildPicks(){
+  const names = [
+    {n:"Rella", sub:"Pescatarian · here for every dinner"},
+    {n:"Laeklyn", sub:"Arrives Mon night"},
+    {n:"Juliette", sub:"Arrives Tue · stays longest"},
+  ];
+  const picks = document.getElementById("picks");
+  picks.innerHTML = names.map(x=>`<button onclick="pick('${x.n}')">${x.n}<span class="sub">${x.sub}</span></button>`).join("")
+    + `<button class="parent" onclick="pick('Parent')">Parent preview<span class="sub">Cam — read crew notes</span></button>`;
+}
+function pick(name){
+  state.persona = name;
+  localStorage.setItem(PERSONA_KEY, name);
+  document.getElementById("overlay").style.display="none";
+  boot();
+}
+function resetPersona(){
+  localStorage.removeItem(PERSONA_KEY);
+  location.reload();
+}
+
+/* ---- boot ---- */
+async function boot(){
+  document.getElementById("tabs").style.display="flex";
+  renderHeader();
+  state.tab = "today";
+  document.getElementById("view").innerHTML = `<div class="loading">Loading the week…</div>`;
+  renderTab();
+}
+
+async function init(){
+  state.today = todayCentral();
+  // load data once up front
+  try{
+    state.data = await loadData();
+  }catch(e){
+    document.getElementById("view").innerHTML = `<div class="card err"><b>Couldn't load the guide.</b><br>${esc(e.message)}<br><br>Check your connection and refresh.</div>`;
+    return;
+  }
+  const saved = localStorage.getItem(PERSONA_KEY);
+  // validate saved persona still exists
+  const valid = saved==="Parent" || (saved && state.data.people.some(p=>p.name===saved));
+  if(valid){ state.persona = saved; boot(); }
+  else { buildPicks(); document.getElementById("overlay").style.display="flex"; }
+}
+
+init();
+</script>
+</body>
+</html>
