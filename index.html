@@ -100,6 +100,10 @@
     border-radius:12px;padding:6px 11px;font-size:12.5px;font-weight:600;line-height:1.35;
   }
   .flag.warn{background:#fdf3e0;color:#7a591b;border-color:#f0d9a8}
+
+  /* standing daily reminders */
+  .reminders{margin:8px 0 0;padding-left:18px}
+  .reminders li{margin-bottom:6px;font-size:14px;color:var(--ink)}
   .nocook{display:inline-block;margin-top:8px;background:#eef1f6;color:var(--navy);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}
 
   /* week accordion */
@@ -344,6 +348,18 @@ function pescBanner(){
   return `<div class="banner fish"><span class="ico">🐟</span><div><b>Pescatarian.</b> Fish and seafood are fine, no other meat.</div></div>`;
 }
 
+/* Standing reminders that apply every day. */
+function dailyReminders(){
+  return `<div class="card">
+      <div class="eyebrow">Every Day</div>
+      <ul class="reminders">
+        <li>Quiet Hour is 1:00–2:00 PM.</li>
+        <li>Take Gemma to the bathroom when she wakes up.</li>
+        <li>Take Gemma to the bathroom right before Quiet Hour (1:00 PM).</li>
+      </ul>
+    </div>`;
+}
+
 function renderToday(){
   const day = state.data.days.find(d => d.day_date === state.today);
   if(!day){
@@ -362,7 +378,8 @@ function renderToday(){
       ${day.summary?`<h2>${esc(day.summary)}</h2>`:""}
       ${scheduleSection(day)}
       ${mealsSection(state.today)}
-    </div>`;
+    </div>
+    ${dailyReminders()}`;
 }
 
 function renderHome(){ /* folded into header + today */ }
@@ -413,10 +430,14 @@ function renderRef(){
       <div class="eyebrow">Daily Rhythm</div>
       <h3>Mornings</h3>
       <ul><li>Kids wake on their own → breakfast.</li>
+        <li>Take Gemma to the bathroom when she wakes up.</li>
         <li>Boys to summer school: Theo drop ~8:15, Oliver ~8:50.</li>
         <li>Sunscreen + water bottles.</li>
         <li>Pickup: Oliver 12:00, Theo 12:15.</li>
         <li>Girls stay home — easy play, library, backyard.</li></ul>
+      <h3 style="margin-top:12px">Afternoon</h3>
+      <ul><li>Quiet Hour is 1:00–2:00 PM.</li>
+        <li>Take Gemma to the bathroom right before Quiet Hour.</li></ul>
       <h3 style="margin-top:12px">Evenings</h3>
       <ul><li>Dinner between 5:30 and 6:30.</li></ul>
     </div>

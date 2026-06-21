@@ -138,3 +138,8 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
   (`scheduleSection()` / `mealsSection()` in `index.html`).
 - Deleted the Wed/Thu day summaries ("A calmer/quieter day at home") — set `summary = null`; the
   UI now omits the summary line when it's empty.
+
+### 2026-06-20 — Round 6 (Cam feedback)
+- Added standing daily reminders (`dailyReminders()`): **Quiet Hour 1:00–2:00 PM**, take Gemma to
+  the bathroom when she wakes up, and again right before Quiet Hour. Shown as an "Every Day" card
+  on Today and folded into the Reference daily rhythm (new Afternoon block + a morning line).
