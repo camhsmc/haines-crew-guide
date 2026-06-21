@@ -130,3 +130,11 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
   bedtime detail (Cam does bedtime).
 - Cut filler copy app-wide per Cam: no reassurance/atmosphere lines. Dinner pescatarian flag is
   now just "🐟 Pescatarian". Keep all copy factual.
+
+### 2026-06-20 — Round 5 (Cam feedback)
+- Restructured each day into two labeled sections — **Schedule** (the timeline) and **Meals**
+  (Lunch + Dinner as rows under one heading). Replaced the standalone lunch/dinner cards, which
+  looked too much like the collapsed day cards. Used in both Today and the Week accordion body
+  (`scheduleSection()` / `mealsSection()` in `index.html`).
+- Deleted the Wed/Thu day summaries ("A calmer/quieter day at home") — set `summary = null`; the
+  UI now omits the summary line when it's empty.

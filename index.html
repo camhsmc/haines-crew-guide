@@ -77,13 +77,25 @@
   .tl .w{flex:1}
   .tl .w .note{font-size:12.5px;color:var(--muted);margin-top:2px}
 
-  /* meal cards */
-  .dinner{border-left:4px solid var(--gold)}
-  .lunch{border-left:4px solid var(--navy)}
-  .dinner .title,.lunch .title{font-size:16px;font-weight:700;color:var(--navy);margin-top:2px}
-  .meal-side{font-size:13px;color:var(--muted);margin-top:4px}
+  /* section headings inside a day card (Schedule / Meals) */
+  .sec{
+    font-size:13px;font-weight:700;color:var(--navy);
+    margin:16px 0 8px;padding-top:14px;border-top:1px solid var(--line);
+  }
+  .card > .sec:first-of-type{margin-top:8px}
+
+  /* meal rows */
+  .meal{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+  .meal:first-of-type{border-top:none;padding-top:2px}
+  .meal-k{
+    flex:0 0 58px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--gold);font-weight:700;padding-top:3px;
+  }
+  .meal-v{flex:1}
+  .meal-title{font-weight:700;color:var(--navy);font-size:15px}
+  .meal-side{font-size:13px;color:var(--muted);margin-top:3px}
   .flag{
-    display:inline-flex;gap:6px;align-items:flex-start;margin-top:10px;
+    display:inline-flex;gap:6px;align-items:flex-start;margin-top:8px;
     background:#e8f3ee;color:#1d5e3c;border:1px solid #bfe0cf;
     border-radius:12px;padding:6px 11px;font-size:12.5px;font-weight:600;line-height:1.35;
   }
@@ -278,42 +290,48 @@ function isPescatarian(){
 /* ============================================================
    RENDER
    ============================================================ */
-function lunchCard(date){
+function mealRow(kind, title, side, chips, flag){
+  return `<div class="meal">
+      <div class="meal-k">${kind}</div>
+      <div class="meal-v">
+        <div class="meal-title">${esc(title)}</div>
+        ${side?`<div class="meal-side">${esc(side)}</div>`:""}
+        ${chips||""}
+        ${flag||""}
+      </div>
+    </div>`;
+}
+
+/* Meals section: Lunch + Dinner rows grouped under one "Meals" heading. */
+function mealsSection(date){
   const l = state.data.lunchByDate[date];
-  if(!l) return "";  // lunches are Mon–Fri only
-  const sides = [l.veggie, l.fruit].filter(Boolean).join(" · ");
-  let flag = "";
-  if(isPescatarian() && l.rella_note){
-    const ico = l.rella_ok ? "✅" : "⚠️";
-    flag = `<div class="flag ${l.rella_ok?'':'warn'}">${ico} ${esc(l.rella_note)}</div>`;
-  }
-  return `<div class="card lunch">
-      <div class="eyebrow">Lunch</div>
-      <div class="title">${esc(l.lunch)}</div>
-      ${sides?`<div class="meal-side">${esc(sides)}</div>`:""}
-      ${flag}
-    </div>`;
-}
-
-function dinnerCard(date){
   const d = state.data.dinnerByDate[date];
-  if(!d) return `<div class="card dinner"><div class="eyebrow">Dinner</div><div class="muted small">No dinner on the plan for this day.</div></div>`;
-  // Just the dish name — Cam handles the cooking, so no recipe/instructions here.
-  const noCook = !d.recipe_id;  // Tue picnic / Fri pizza have no recipe_id — still real dinners
-  const fishFlag = isPescatarian() ? `<div class="flag">🐟 Pescatarian</div>` : "";
-  return `<div class="card dinner">
-      <div class="eyebrow">Dinner</div>
-      <div class="title">${esc(d.recipe_title)}</div>
-      ${noCook?`<span class="nocook">No cooking</span>`:""}
-      ${fishFlag}
-    </div>`;
+  if(!l && !d) return "";
+  let rows = "";
+  if(l){
+    const side = [l.veggie, l.fruit].filter(Boolean).join(" · ");
+    let flag = "";
+    if(isPescatarian() && l.rella_note){
+      const ico = l.rella_ok ? "✅" : "⚠️";
+      flag = `<div class="flag ${l.rella_ok?'':'warn'}">${ico} ${esc(l.rella_note)}</div>`;
+    }
+    rows += mealRow("Lunch", l.lunch, side, "", flag);
+  }
+  if(d){
+    const chips = !d.recipe_id ? `<span class="nocook">No cooking</span>` : "";
+    const flag  = isPescatarian() ? `<div class="flag">🐟 Pescatarian</div>` : "";
+    rows += mealRow("Dinner", d.recipe_title, "", chips, flag);
+  }
+  return `<h3 class="sec">Meals</h3>${rows}`;
 }
 
-function timeline(day){
+/* Schedule section: the day's timeline. */
+function scheduleSection(day){
   const items = (day.schedule||[]).map(s => `
     <li><div class="t">${esc(s.time)}</div>
         <div class="w">${esc(s.what)}${s.note?`<div class="note">${esc(s.note)}</div>`:""}</div></li>`).join("");
-  return items ? `<ul class="tl">${items}</ul>` : `<div class="muted small">Open day — no fixed schedule.</div>`;
+  const body = items ? `<ul class="tl">${items}</ul>` : `<div class="muted small">No fixed schedule.</div>`;
+  return `<h3 class="sec">Schedule</h3>${body}`;
 }
 
 function headsUp(day){
@@ -323,7 +341,7 @@ function headsUp(day){
 
 function pescBanner(){
   if(!isPescatarian()) return "";
-  return `<div class="banner fish"><span class="ico">🐟</span><div><b>Pescatarian reminder.</b> ${esc(state.persona)} eats fish &amp; seafood but no other meat. Each dinner card flags what to watch for.</div></div>`;
+  return `<div class="banner fish"><span class="ico">🐟</span><div><b>Pescatarian.</b> Fish and seafood are fine, no other meat.</div></div>`;
 }
 
 function renderToday(){
@@ -341,11 +359,10 @@ function renderToday(){
   return `${pescBanner()}${headsUp(day)}
     <div class="card">
       <div class="eyebrow">${esc(day.label)} · ${esc(state.today)}</div>
-      <h2>${esc(day.summary)}</h2>
-      ${timeline(day)}
-    </div>
-    ${lunchCard(state.today)}
-    ${dinnerCard(state.today)}`;
+      ${day.summary?`<h2>${esc(day.summary)}</h2>`:""}
+      ${scheduleSection(day)}
+      ${mealsSection(state.today)}
+    </div>`;
 }
 
 function renderHome(){ /* folded into header + today */ }
@@ -357,14 +374,13 @@ function renderWeek(){
     return `<div class="day ${isToday?'today':''}">
       <button class="head" onclick="toggleDay(this)" aria-expanded="${open}">
         <span><span class="lbl">${esc(day.label)}${isToday?'<span class="pill">Today</span>':''}</span>
-        <span class="sum">${esc(day.summary)}</span></span>
+        ${day.summary?`<span class="sum">${esc(day.summary)}</span>`:""}</span>
         <span class="chev">${open?'▲':'▼'}</span>
       </button>
       <div class="body" style="display:${open?'block':'none'}">
         ${headsUp(day)}
-        ${timeline(day)}
-        ${lunchCard(day.day_date)}
-        ${dinnerCard(day.day_date)}
+        ${scheduleSection(day)}
+        ${mealsSection(day.day_date)}
       </div>
     </div>`;
   }).join("");
