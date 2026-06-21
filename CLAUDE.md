@@ -30,6 +30,7 @@ Created via migration `hh_niece_crew_guide_tables`. **Existing `hh_*` tables are
 | `hh_niece_days` | day_date (PK), label, summary, schedule (jsonb `[{time,what,note}]`), heads_up | 6 days Mon–Sat |
 | `hh_niece_locations` | id, name, address, note | 5 locations |
 | `hh_niece_contacts` | id, name, role, phone, note, sort | phone left blank on purpose |
+| `hh_niece_lunches` | day_date (PK), lunch, veggie, fruit, rella_note, rella_ok | Mon–Fri kid lunches; `rella_note` shows for Rella only (✅ if `rella_ok`, ⚠️ if not) |
 | `hh_niece_notes` | id, created_at, niece, body | crew → Cam channel; anon insert allowed |
 
 RLS: anon `select` on every table; anon `insert` on `hh_niece_notes` only.
@@ -120,3 +121,12 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
 - Removed the **Kids** tab entirely — the nieces know the kids, and Cam does bedtime mainly.
   Bottom bar is now Today / Week / Reference. The `hh_niece_kids` table is retained (unused) in
   case it's wanted later; the app no longer fetches or renders it.
+
+### 2026-06-20 — Round 4 (Cam feedback)
+- Added the **Lunch menu** (Mon–Fri) — new `hh_niece_lunches` table; a Lunch card now shows on
+  Today and each Week day, between the schedule and the dinner card. Rella sees the per-day note
+  (✅ pescatarian-friendly, or ⚠️ swap — e.g. Fri fish sticks for chicken).
+- Trimmed Reference → Evenings to a single line: "Dinner between 5:30 and 6:30." Dropped per-kid
+  bedtime detail (Cam does bedtime).
+- Cut filler copy app-wide per Cam: no reassurance/atmosphere lines. Dinner pescatarian flag is
+  now just "🐟 Pescatarian". Keep all copy factual.

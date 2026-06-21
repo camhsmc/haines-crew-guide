@@ -77,15 +77,17 @@
   .tl .w{flex:1}
   .tl .w .note{font-size:12.5px;color:var(--muted);margin-top:2px}
 
-  /* dinner card */
+  /* meal cards */
   .dinner{border-left:4px solid var(--gold)}
-  .dinner .title{font-size:16px;font-weight:700;color:var(--navy);margin-top:2px}
-  .dinner .instr{font-size:14px;margin-top:6px}
+  .lunch{border-left:4px solid var(--navy)}
+  .dinner .title,.lunch .title{font-size:16px;font-weight:700;color:var(--navy);margin-top:2px}
+  .meal-side{font-size:13px;color:var(--muted);margin-top:4px}
   .flag{
-    display:inline-flex;gap:6px;align-items:center;margin-top:10px;
+    display:inline-flex;gap:6px;align-items:flex-start;margin-top:10px;
     background:#e8f3ee;color:#1d5e3c;border:1px solid #bfe0cf;
-    border-radius:20px;padding:5px 11px;font-size:12.5px;font-weight:600;
+    border-radius:12px;padding:6px 11px;font-size:12.5px;font-weight:600;line-height:1.35;
   }
+  .flag.warn{background:#fdf3e0;color:#7a591b;border-color:#f0d9a8}
   .nocook{display:inline-block;margin-top:8px;background:#eef1f6;color:var(--navy);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}
 
   /* week accordion */
@@ -248,16 +250,19 @@ async function loadData(){
     + "&notes=ilike." + encodeURIComponent("NIECE WEEK*")
     + "&meal_date=gte." + WEEK_START + "&meal_date=lte." + WEEK_END
     + "&order=meal_date";
-  const [people,days,locations,contacts,dinners] = await Promise.all([
+  const [people,days,locations,contacts,lunches,dinners] = await Promise.all([
     getJSON("hh_niece_people?select=*&order=sort"),
     getJSON("hh_niece_days?select=*&order=day_date"),
     getJSON("hh_niece_locations?select=*&order=id"),
     getJSON("hh_niece_contacts?select=*&order=sort"),
+    getJSON("hh_niece_lunches?select=*&order=day_date"),
     getJSON(dinnerQ),
   ]);
   const dinnerByDate = {};
   dinners.forEach(d => dinnerByDate[d.meal_date] = d);
-  return { people, days, locations, contacts, dinnerByDate };
+  const lunchByDate = {};
+  lunches.forEach(l => lunchByDate[l.day_date] = l);
+  return { people, days, locations, contacts, lunchByDate, dinnerByDate };
 }
 
 /* ---- persona helpers ---- */
@@ -273,15 +278,31 @@ function isPescatarian(){
 /* ============================================================
    RENDER
    ============================================================ */
+function lunchCard(date){
+  const l = state.data.lunchByDate[date];
+  if(!l) return "";  // lunches are Mon–Fri only
+  const sides = [l.veggie, l.fruit].filter(Boolean).join(" · ");
+  let flag = "";
+  if(isPescatarian() && l.rella_note){
+    const ico = l.rella_ok ? "✅" : "⚠️";
+    flag = `<div class="flag ${l.rella_ok?'':'warn'}">${ico} ${esc(l.rella_note)}</div>`;
+  }
+  return `<div class="card lunch">
+      <div class="eyebrow">Lunch</div>
+      <div class="title">${esc(l.lunch)}</div>
+      ${sides?`<div class="meal-side">${esc(sides)}</div>`:""}
+      ${flag}
+    </div>`;
+}
+
 function dinnerCard(date){
   const d = state.data.dinnerByDate[date];
   if(!d) return `<div class="card dinner"><div class="eyebrow">Dinner</div><div class="muted small">No dinner on the plan for this day.</div></div>`;
   // Just the dish name — Cam handles the cooking, so no recipe/instructions here.
   const noCook = !d.recipe_id;  // Tue picnic / Fri pizza have no recipe_id — still real dinners
-  const fishFlag = isPescatarian()
-    ? `<div class="flag">🐟 Pescatarian — Cam has your dinner covered.</div>` : "";
+  const fishFlag = isPescatarian() ? `<div class="flag">🐟 Pescatarian</div>` : "";
   return `<div class="card dinner">
-      <div class="eyebrow">Tonight's Dinner</div>
+      <div class="eyebrow">Dinner</div>
       <div class="title">${esc(d.recipe_title)}</div>
       ${noCook?`<span class="nocook">No cooking</span>`:""}
       ${fishFlag}
@@ -323,6 +344,7 @@ function renderToday(){
       <h2>${esc(day.summary)}</h2>
       ${timeline(day)}
     </div>
+    ${lunchCard(state.today)}
     ${dinnerCard(state.today)}`;
 }
 
@@ -341,6 +363,7 @@ function renderWeek(){
       <div class="body" style="display:${open?'block':'none'}">
         ${headsUp(day)}
         ${timeline(day)}
+        ${lunchCard(day.day_date)}
         ${dinnerCard(day.day_date)}
       </div>
     </div>`;
@@ -379,9 +402,7 @@ function renderRef(){
         <li>Pickup: Oliver 12:00, Theo 12:15.</li>
         <li>Girls stay home — easy play, library, backyard.</li></ul>
       <h3 style="margin-top:12px">Evenings</h3>
-      <ul><li>Dinner ~5:30.</li>
-        <li>Girls bed ~7:00 — bath, jammies, 2 books, prayers. Gemma needs a diaper + blanket.</li>
-        <li>Boys bed ~7:45 — read, prayers, lights out.</li></ul>
+      <ul><li>Dinner between 5:30 and 6:30.</li></ul>
     </div>
 
     <div class="card ref">
