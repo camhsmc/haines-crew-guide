@@ -63,7 +63,6 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
 - **Today:** date-scoped (auto-detects Central date; `?date=YYYY-MM-DD` override for testing).
   Pescatarian banner (Rella only) → day heads-up → schedule timeline → live dinner card.
 - **Week:** six expandable Mon–Sat cards (today auto-expanded + highlighted).
-- **Kids:** Theo / Oliver / Pippa / Gemma — age, blurb, bedtime.
 - **Reference:** daily rhythm, mealtime strike system, locations, contacts, and the
   "Leave a note for Cam" form. Parent-preview persona reads the submitted notes instead of the form.
 
@@ -116,3 +115,8 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
   the library/podiatry overlap heads-up (no longer the crew's concern).
 - Removed the Papa Johns "standing family tradition" framing (it lived in `hh_meal_plan.notes`,
   which the app no longer surfaces anyway).
+
+### 2026-06-20 — Round 3 (Cam feedback)
+- Removed the **Kids** tab entirely — the nieces know the kids, and Cam does bedtime mainly.
+  Bottom bar is now Today / Week / Reference. The `hh_niece_kids` table is retained (unused) in
+  case it's wanted later; the app no longer fetches or renders it.

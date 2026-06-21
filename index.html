@@ -206,7 +206,6 @@
 <nav class="tabs" id="tabs" style="display:none">
   <button data-tab="today" onclick="go('today')"><span class="ti">📅</span>Today</button>
   <button data-tab="week"  onclick="go('week')"><span class="ti">🗓️</span>Week</button>
-  <button data-tab="kids"  onclick="go('kids')"><span class="ti">🧒</span>Kids</button>
   <button data-tab="ref"   onclick="go('ref')"><span class="ti">📖</span>Reference</button>
 </nav>
 
@@ -249,9 +248,8 @@ async function loadData(){
     + "&notes=ilike." + encodeURIComponent("NIECE WEEK*")
     + "&meal_date=gte." + WEEK_START + "&meal_date=lte." + WEEK_END
     + "&order=meal_date";
-  const [people,kids,days,locations,contacts,dinners] = await Promise.all([
+  const [people,days,locations,contacts,dinners] = await Promise.all([
     getJSON("hh_niece_people?select=*&order=sort"),
-    getJSON("hh_niece_kids?select=*&order=sort"),
     getJSON("hh_niece_days?select=*&order=day_date"),
     getJSON("hh_niece_locations?select=*&order=id"),
     getJSON("hh_niece_contacts?select=*&order=sort"),
@@ -259,7 +257,7 @@ async function loadData(){
   ]);
   const dinnerByDate = {};
   dinners.forEach(d => dinnerByDate[d.meal_date] = d);
-  return { people, kids, days, locations, contacts, dinnerByDate };
+  return { people, days, locations, contacts, dinnerByDate };
 }
 
 /* ---- persona helpers ---- */
@@ -355,18 +353,6 @@ function toggleDay(btn){
   body.style.display = open ? "none" : "block";
   btn.querySelector(".chev").textContent = open ? "▼" : "▲";
   btn.setAttribute("aria-expanded", String(!open));
-}
-
-function renderKids(){
-  return state.data.kids.map(k=>`
-    <div class="card"><div class="kid">
-      <div class="avatar">${esc(k.name[0])}</div>
-      <div style="flex:1">
-        <h3>${esc(k.name)} <span class="age">· ${esc(k.age)}</span></h3>
-        <div class="small" style="margin-top:4px">${esc(k.blurb)}</div>
-        <div class="bed">🌙 <b>Bedtime:</b> ${esc(k.bedtime)}</div>
-      </div>
-    </div></div>`).join("");
 }
 
 function renderRef(){
@@ -481,7 +467,6 @@ function renderTab(){
   let html = "";
   if(state.tab==="today") html = renderToday();
   else if(state.tab==="week") html = renderWeek();
-  else if(state.tab==="kids") html = renderKids();
   else if(state.tab==="ref") html = renderRef();
   v.innerHTML = html;
   document.querySelectorAll("nav.tabs button").forEach(b=>{
