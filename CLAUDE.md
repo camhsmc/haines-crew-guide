@@ -1,6 +1,6 @@
 # Crew Guide — Project Bible
 
-Personalized, mobile-first reference guide for Cam's three nieces (Rella, Laeklyn, Juliette)
+Personalized, mobile-first reference guide for Cam's three nieces (Rella, Laeklyn, Juliet)
 who are helping with his four kids the week of **Mon Jun 22 → Sat Jun 27, 2026** while Kara is
 away. Each niece picks who she is once; the app then greets her by name, opens to a date-scoped
 "Today" view, and shows the week, the kids, the daily rhythm, and a quick reference. Cam is home
@@ -50,12 +50,12 @@ data:**
    The app keys off `recipe_title`/`notes`; a NULL `recipe_id` just renders a "No cooking" chip.
 2. **`recipe_title` is already denormalized onto `hh_meal_plan`** — no join to `hh_recipes` needed.
 
-### Dinner-note cleaning (`cleanDinnerNote`)
+### Dinner cards show the dish name only
 
-- Strips the `NIECE WEEK Day N —` prefix.
-- Removes the stale Wednesday sentence `Cam at YM/YW ... Kara assembles. Easy.` — Cam is home all
-  week and Kara is away, so that line in the source row is wrong. It's suppressed in the display
-  layer only; the source `hh_meal_plan` row is left untouched.
+Cam handles all the cooking, so dinner cards show just `recipe_title` (plus a "No cooking" chip
+for the NULL-`recipe_id` nights and a small pescatarian note for Rella). The `hh_meal_plan.notes`
+field — recipe steps, the stale Wednesday "Kara assembles" line, the Papa Johns "tradition"
+framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are left untouched.
 
 ## Screens
 
@@ -105,4 +105,14 @@ data:**
 - Created + seeded the six `hh_niece_*` tables; verified anon read + note insert through RLS.
 - Built `index.html` (persona flow, Today/Week/Kids/Reference, live dinners, pescatarian flags,
   leave-a-note). Verified the note-cleaning logic against the real Wednesday/Thursday/Monday notes.
-- Next: deploy to public GitHub Pages, then log the Cerebro note.
+- Deployed to public GitHub Pages (https://camhsmc.github.io/haines-crew-guide/) and logged the
+  Cerebro note.
+
+### 2026-06-20 — Round 2 tweaks (Cam feedback)
+- Dinner cards now show the dish name only (dropped recipe/instruction display + `cleanDinnerNote`).
+- Persona picker shows just the three names + Parent preview (removed the per-name detail lines).
+- Renamed Juliette → **Juliet** (one T) across `hh_niece_*` data and the app.
+- Cam takes Gemma to the Tuesday podiatry appointment — updated the Tuesday timeline and removed
+  the library/podiatry overlap heads-up (no longer the crew's concern).
+- Removed the Papa Johns "standing family tradition" framing (it lived in `hh_meal_plan.notes`,
+  which the app no longer surfaces anyway).

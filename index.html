@@ -244,7 +244,7 @@ async function getJSON(path){
   return r.json();
 }
 async function loadData(){
-  const dinnerQ = "hh_meal_plan?select=meal_date,recipe_title,notes,recipe_id"
+  const dinnerQ = "hh_meal_plan?select=meal_date,recipe_title,recipe_id"
     + "&meal_type=eq.dinner"
     + "&notes=ilike." + encodeURIComponent("NIECE WEEK*")
     + "&meal_date=gte." + WEEK_START + "&meal_date=lte." + WEEK_END
@@ -260,17 +260,6 @@ async function loadData(){
   const dinnerByDate = {};
   dinners.forEach(d => dinnerByDate[d.meal_date] = d);
   return { people, kids, days, locations, contacts, dinnerByDate };
-}
-
-/* ---- dinner note cleaning ----
-   Strip the "NIECE WEEK Day N —" prefix and remove the stale
-   Wednesday line ("Cam at YM/YW... Kara assembles. Easy.") — Cam is
-   home all week and Kara is away, so that sentence is wrong. */
-function cleanDinnerNote(note){
-  if(!note) return "";
-  let t = note.replace(/^NIECE WEEK Day \d+\s*[—\-]\s*/i, "");
-  t = t.replace(/\bCam at YM\/YW[^.]*\.\s*(Easy\.?)?/i, "");
-  return t.replace(/\s{2,}/g," ").trim();
 }
 
 /* ---- persona helpers ---- */
@@ -289,15 +278,14 @@ function isPescatarian(){
 function dinnerCard(date){
   const d = state.data.dinnerByDate[date];
   if(!d) return `<div class="card dinner"><div class="eyebrow">Dinner</div><div class="muted small">No dinner on the plan for this day.</div></div>`;
-  const instr = cleanDinnerNote(d.notes);
+  // Just the dish name — Cam handles the cooking, so no recipe/instructions here.
   const noCook = !d.recipe_id;  // Tue picnic / Fri pizza have no recipe_id — still real dinners
   const fishFlag = isPescatarian()
-    ? `<div class="flag">🐟 Pescatarian — fish/seafood is fine, no other meat. Check the note above.</div>` : "";
+    ? `<div class="flag">🐟 Pescatarian — Cam has your dinner covered.</div>` : "";
   return `<div class="card dinner">
       <div class="eyebrow">Tonight's Dinner</div>
       <div class="title">${esc(d.recipe_title)}</div>
       ${noCook?`<span class="nocook">No cooking</span>`:""}
-      ${instr?`<div class="instr">${esc(instr)}</div>`:""}
       ${fishFlag}
     </div>`;
 }
@@ -507,14 +495,10 @@ function go(tab){ state.tab=tab; renderTab(); }
 
 /* ---- persona selection ---- */
 function buildPicks(){
-  const names = [
-    {n:"Rella", sub:"Pescatarian · here for every dinner"},
-    {n:"Laeklyn", sub:"Arrives Mon night"},
-    {n:"Juliette", sub:"Arrives Tue · stays longest"},
-  ];
+  const names = ["Rella","Laeklyn","Juliet"];
   const picks = document.getElementById("picks");
-  picks.innerHTML = names.map(x=>`<button onclick="pick('${x.n}')">${x.n}<span class="sub">${x.sub}</span></button>`).join("")
-    + `<button class="parent" onclick="pick('Parent')">Parent preview<span class="sub">Cam — read crew notes</span></button>`;
+  picks.innerHTML = names.map(n=>`<button onclick="pick('${n}')">${n}</button>`).join("")
+    + `<button class="parent" onclick="pick('Parent')">Parent preview</button>`;
 }
 function pick(name){
   state.persona = name;
