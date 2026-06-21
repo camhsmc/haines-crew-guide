@@ -31,7 +31,38 @@ Created via migration `hh_niece_crew_guide_tables`. **Existing `hh_*` tables are
 | `hh_niece_locations` | id, name, address, note | 5 locations |
 | `hh_niece_contacts` | id, name, role, phone, note, sort | phone left blank on purpose |
 | `hh_niece_lunches` | day_date (PK), lunch, veggie, fruit, rella_note, rella_ok | Mon–Fri kid lunches; `rella_note` shows for Rella only (✅ if `rella_ok`, ⚠️ if not) |
+| `hh_niece_reminders` | id, body, sort | standing "Every Day" reminders; drives the Today card |
+| `hh_niece_config` | key (PK), value | holds `pin_hash` for edit mode; anon READ only, writes need service_role |
 | `hh_niece_notes` | id, created_at, niece, body | crew → Cam channel; anon insert allowed |
+
+## Edit mode (Parent persona + PIN)
+
+The Parent persona gets a 4th bottom-tab, **Edit**. Tapping it asks for a PIN; on match it unlocks
+in-app editing of the simple fields: **People, Lunches, Locations, Contacts, Daily reminders**.
+Day schedules (timeline items) and dinners (`hh_meal_plan`) are intentionally NOT editable here.
+
+- **Writes** use the anon key against the editable tables (RLS has `update`/`insert`/`delete`
+  policies). Locations/Contacts/Reminders support add + delete; People/Lunches are edit-only.
+- **The PIN gates the UI only — it is not hard security.** With the public anon key, the data
+  tables are technically writable by anyone who reads the page source. Accepted posture for
+  first-names-and-schedule data (Cam chose the PIN gate over a full login).
+- **PIN storage:** SHA-256 hash in `hh_niece_config.pin_hash`. anon can read the hash (to verify
+  an entered PIN) but cannot write it — the PIN is only settable with the service_role key, so it
+  can't be changed through the app. Unlock state is in-memory (re-prompts each session / persona
+  switch); never stored in localStorage.
+
+### Setting / changing the edit PIN (run in a terminal, PIN never leaves your machine)
+
+```bash
+SVC=$(awk '/optzbdbavpnxstpxrpbh \(Cerebro/{f=1} f&&/service_role key:/{print $NF; exit}' ~/.secrets.md)
+read -s -p "New Crew Guide edit PIN: " PIN; echo
+HASH=$(node -e 'process.stdout.write(require("crypto").createHash("sha256").update(process.argv[1]).digest("hex"))' "$PIN")
+curl -s -o /dev/null -w "%{http_code}\n" -X POST \
+  "https://optzbdbavpnxstpxrpbh.supabase.co/rest/v1/hh_niece_config" \
+  -H "apikey: $SVC" -H "Authorization: Bearer $SVC" -H "Content-Type: application/json" \
+  -H "Prefer: resolution=merge-duplicates,return=minimal" \
+  -d "{\"key\":\"pin_hash\",\"value\":\"$HASH\"}"
+```
 
 RLS: anon `select` on every table; anon `insert` on `hh_niece_notes` only.
 
@@ -143,3 +174,12 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
 - Added standing daily reminders (`dailyReminders()`): **Quiet Hour 1:00–2:00 PM**, take Gemma to
   the bathroom when she wakes up, and again right before Quiet Hour. Shown as an "Every Day" card
   on Today and folded into the Reference daily rhythm (new Afternoon block + a morning line).
+
+### 2026-06-20 — Round 7 (Cam feedback)
+- Added **Edit mode** (Parent persona + PIN) — see the "Edit mode" section above. Cam can now edit
+  People, Lunches, Locations, Contacts, and Daily reminders directly in the app.
+- Moved the daily reminders out of hardcoded HTML into the new `hh_niece_reminders` table (so they
+  became editable) and removed the duplicated reminder lines from the Reference rhythm.
+- Verified anon CRUD through the new RLS (PATCH/POST/DELETE → 204/201) and that `hh_niece_config`
+  rejects anon writes (401). PIN hash store/read plumbing verified end-to-end.
+- **Cam still needs to set the edit PIN** with the terminal command above before edit mode unlocks.

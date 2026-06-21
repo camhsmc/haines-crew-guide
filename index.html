@@ -104,6 +104,17 @@
   /* standing daily reminders */
   .reminders{margin:8px 0 0;padding-left:18px}
   .reminders li{margin-bottom:6px;font-size:14px;color:var(--ink)}
+
+  /* edit mode */
+  .erec{border-top:1px solid var(--line);padding:14px 0}
+  .erec:first-of-type{border-top:none;padding-top:4px}
+  .erec-title{font-weight:700;color:var(--navy);margin-bottom:8px;font-size:14px}
+  .efield{display:block;margin-bottom:9px}
+  .efield > span{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+  .erow{display:flex;gap:8px;margin-top:6px}
+  .btn-sm{background:var(--navy);color:#fff;border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:700}
+  .btn-sm.danger{background:#fff;color:#9a2b2b;border:1px solid #e7b8b8}
+  .edit-note{font-size:12px;color:var(--muted);margin-top:6px}
   .nocook{display:inline-block;margin-top:8px;background:#eef1f6;color:var(--navy);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}
 
   /* week accordion */
@@ -147,7 +158,7 @@
   .contact a{color:var(--gold);font-weight:700;text-decoration:none;font-size:14px;white-space:nowrap}
 
   /* note form */
-  textarea,input{
+  textarea,input,select{
     width:100%;font-family:inherit;font-size:15px;border:1px solid var(--line);
     border-radius:10px;padding:11px;background:#fff;color:var(--ink);
   }
@@ -225,6 +236,7 @@
   <button data-tab="today" onclick="go('today')"><span class="ti">📅</span>Today</button>
   <button data-tab="week"  onclick="go('week')"><span class="ti">🗓️</span>Week</button>
   <button data-tab="ref"   onclick="go('ref')"><span class="ti">📖</span>Reference</button>
+  <button data-tab="edit"  id="editTab" style="display:none" onclick="go('edit')"><span class="ti">✏️</span>Edit</button>
 </nav>
 
 <script>
@@ -243,7 +255,7 @@ const WEEK_START = "2026-06-22";   // Mon
 const WEEK_END   = "2026-06-27";   // Sat
 const PERSONA_KEY = "crew_persona";
 
-const state = { persona:null, tab:"today", today:null, data:null, noteSent:false };
+const state = { persona:null, tab:"today", today:null, data:null, editUnlocked:false };
 
 /* ---- date helpers ---- */
 function todayCentral(){
@@ -266,19 +278,22 @@ async function loadData(){
     + "&notes=ilike." + encodeURIComponent("NIECE WEEK*")
     + "&meal_date=gte." + WEEK_START + "&meal_date=lte." + WEEK_END
     + "&order=meal_date";
-  const [people,days,locations,contacts,lunches,dinners] = await Promise.all([
+  const [people,days,locations,contacts,lunches,reminders,config,dinners] = await Promise.all([
     getJSON("hh_niece_people?select=*&order=sort"),
     getJSON("hh_niece_days?select=*&order=day_date"),
     getJSON("hh_niece_locations?select=*&order=id"),
     getJSON("hh_niece_contacts?select=*&order=sort"),
     getJSON("hh_niece_lunches?select=*&order=day_date"),
+    getJSON("hh_niece_reminders?select=*&order=sort"),
+    getJSON("hh_niece_config?select=key,value&key=eq.pin_hash"),
     getJSON(dinnerQ),
   ]);
   const dinnerByDate = {};
   dinners.forEach(d => dinnerByDate[d.meal_date] = d);
   const lunchByDate = {};
   lunches.forEach(l => lunchByDate[l.day_date] = l);
-  return { people, days, locations, contacts, lunchByDate, dinnerByDate };
+  const pinHash = (config[0] && config[0].value) || null;
+  return { people, days, locations, contacts, lunches, reminders, lunchByDate, dinnerByDate, pinHash };
 }
 
 /* ---- persona helpers ---- */
@@ -348,15 +363,13 @@ function pescBanner(){
   return `<div class="banner fish"><span class="ico">🐟</span><div><b>Pescatarian.</b> Fish and seafood are fine, no other meat.</div></div>`;
 }
 
-/* Standing reminders that apply every day. */
+/* Standing reminders that apply every day (editable in Edit mode). */
 function dailyReminders(){
+  const rems = state.data.reminders || [];
+  if(!rems.length) return "";
   return `<div class="card">
       <div class="eyebrow">Every Day</div>
-      <ul class="reminders">
-        <li>Quiet Hour is 1:00–2:00 PM.</li>
-        <li>Take Gemma to the bathroom when she wakes up.</li>
-        <li>Take Gemma to the bathroom right before Quiet Hour (1:00 PM).</li>
-      </ul>
+      <ul class="reminders">${rems.map(r=>`<li>${esc(r.body)}</li>`).join("")}</ul>
     </div>`;
 }
 
@@ -430,14 +443,10 @@ function renderRef(){
       <div class="eyebrow">Daily Rhythm</div>
       <h3>Mornings</h3>
       <ul><li>Kids wake on their own → breakfast.</li>
-        <li>Take Gemma to the bathroom when she wakes up.</li>
         <li>Boys to summer school: Theo drop ~8:15, Oliver ~8:50.</li>
         <li>Sunscreen + water bottles.</li>
         <li>Pickup: Oliver 12:00, Theo 12:15.</li>
         <li>Girls stay home — easy play, library, backyard.</li></ul>
-      <h3 style="margin-top:12px">Afternoon</h3>
-      <ul><li>Quiet Hour is 1:00–2:00 PM.</li>
-        <li>Take Gemma to the bathroom right before Quiet Hour.</li></ul>
       <h3 style="margin-top:12px">Evenings</h3>
       <ul><li>Dinner between 5:30 and 6:30.</li></ul>
     </div>
@@ -503,6 +512,128 @@ async function loadParentNotes(){
 }
 
 /* ============================================================
+   EDIT MODE (Parent persona + PIN). Writes use the anon key against
+   the editable hh_niece_* tables; the PIN gates the UI only.
+   ============================================================ */
+const EDIT_SPECS = [
+  { key:"people", table:"hh_niece_people", pk:"id", label:"Nieces", titleField:"name",
+    fields:[{k:"name",label:"Name"},{k:"arrives",label:"Arrives"},{k:"departs",label:"Departs"},{k:"dietary",label:"Dietary"},{k:"note",label:"Note"}] },
+  { key:"lunches", table:"hh_niece_lunches", pk:"day_date", label:"Lunches", titleField:"day_date",
+    fields:[{k:"lunch",label:"Lunch"},{k:"veggie",label:"Veggie side"},{k:"fruit",label:"Fruit side"},{k:"rella_note",label:"Note for Rella"},{k:"rella_ok",label:"Pescatarian OK?",type:"bool"}] },
+  { key:"locations", table:"hh_niece_locations", pk:"id", label:"Locations", add:true, del:true,
+    fields:[{k:"name",label:"Name"},{k:"address",label:"Address"},{k:"note",label:"Note"}] },
+  { key:"contacts", table:"hh_niece_contacts", pk:"id", label:"Contacts", add:true, del:true,
+    fields:[{k:"name",label:"Name"},{k:"role",label:"Role"},{k:"phone",label:"Phone"},{k:"note",label:"Note"}] },
+  { key:"reminders", table:"hh_niece_reminders", pk:"id", label:"Daily reminders", add:true, del:true,
+    fields:[{k:"body",label:"Reminder"}] },
+];
+
+async function sha256(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+function renderEdit(){
+  if(state.persona!=="Parent") return "";
+  if(!state.editUnlocked){
+    return `<div class="card">
+      <div class="eyebrow">Edit mode</div>
+      ${state.data.pinHash
+        ? `<p class="small muted">Enter your PIN to edit content.</p>
+           <input id="pinInput" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN">
+           <button class="btn" onclick="tryUnlock()">Unlock</button>
+           <div class="notemsg" id="pinMsg"></div>`
+        : `<p class="small">No edit PIN is set yet. Set one from your terminal, then reload.</p>`}
+    </div>`;
+  }
+  const blocks = EDIT_SPECS.map(spec=>{
+    const rows = state.data[spec.key] || [];
+    const recs = rows.map(r=>editRecord(spec,r)).join("");
+    const addBtn = spec.add ? `<button class="btn" onclick="addRecord('${spec.key}')">+ Add</button>` : "";
+    return `<div class="card"><div class="eyebrow">${esc(spec.label)}</div>${recs}${addBtn}</div>`;
+  }).join("");
+  return `<div class="card"><div class="eyebrow">Edit mode</div>
+      <p class="small muted">Changes save straight to the live guide.</p>
+      <button class="btn gold" onclick="lockEdit()">Lock editing</button></div>
+    ${blocks}`;
+}
+
+function editRecord(spec, r){
+  const pkv = r[spec.pk];
+  const idp = `e_${spec.key}_${pkv}`;
+  const title = spec.titleField ? `<div class="erec-title">${esc(String(r[spec.titleField]||"")||"(new)")}</div>` : "";
+  const fields = spec.fields.map(f=>{
+    const v = r[f.k];
+    if(f.type==="bool"){
+      return `<label class="efield"><span>${esc(f.label)}</span>
+        <select id="${idp}_${f.k}"><option value="true"${v?" selected":""}>Yes</option><option value="false"${!v?" selected":""}>No</option></select></label>`;
+    }
+    return `<label class="efield"><span>${esc(f.label)}</span>
+      <input id="${idp}_${f.k}" value="${esc(v==null?"":v)}"></label>`;
+  }).join("");
+  const del = spec.del ? `<button class="btn-sm danger" onclick="deleteRecord('${spec.key}','${esc(String(pkv))}')">Delete</button>` : "";
+  return `<div class="erec">${title}${fields}
+    <div class="erow"><button class="btn-sm" onclick="saveRecord('${spec.key}','${esc(String(pkv))}',this)">Save</button>${del}</div></div>`;
+}
+
+async function writeRow(method, table, filter, body){
+  const url = SUPA_URL + "/rest/v1/" + table + (filter ? ("?" + filter) : "");
+  const opt = { method, headers:{...HDRS, "Content-Type":"application/json", "Prefer":"return=minimal"} };
+  if(body) opt.body = JSON.stringify(body);
+  const r = await fetch(url, opt);
+  if(!r.ok) throw new Error(method + " " + table + " → " + r.status);
+}
+
+async function reloadEdit(){
+  state.data = await loadData();
+  renderTab();
+}
+
+async function saveRecord(key, pkv, btn){
+  const spec = EDIT_SPECS.find(s=>s.key===key);
+  const idp = `e_${key}_${pkv}`;
+  const patch = {};
+  spec.fields.forEach(f=>{
+    const el = document.getElementById(`${idp}_${f.k}`);
+    patch[f.k] = (f.type==="bool") ? (el.value==="true") : el.value;
+  });
+  if(btn){ btn.disabled = true; btn.textContent = "Saving…"; }
+  try{
+    await writeRow("PATCH", spec.table, `${spec.pk}=eq.${encodeURIComponent(pkv)}`, patch);
+    await reloadEdit();
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.textContent="Save"; }
+    alert("Couldn't save: " + e.message);
+  }
+}
+
+async function addRecord(key){
+  const spec = EDIT_SPECS.find(s=>s.key===key);
+  const seed = key==="reminders" ? {body:"New reminder"}
+             : key==="locations" ? {name:"New location"}
+             : {name:"New contact"};
+  try{ await writeRow("POST", spec.table, "", seed); await reloadEdit(); }
+  catch(e){ alert("Couldn't add: " + e.message); }
+}
+
+async function deleteRecord(key, pkv){
+  const spec = EDIT_SPECS.find(s=>s.key===key);
+  if(!confirm("Delete this?")) return;
+  try{ await writeRow("DELETE", spec.table, `${spec.pk}=eq.${encodeURIComponent(pkv)}`); await reloadEdit(); }
+  catch(e){ alert("Couldn't delete: " + e.message); }
+}
+
+async function tryUnlock(){
+  const v = (document.getElementById("pinInput").value||"").trim();
+  const msg = document.getElementById("pinMsg");
+  if(!v){ msg.textContent="Enter your PIN."; msg.style.color="#9a2b2b"; return; }
+  const h = await sha256(v);
+  if(h === state.data.pinHash){ state.editUnlocked = true; renderTab(); }
+  else { msg.textContent="Wrong PIN."; msg.style.color="#9a2b2b"; }
+}
+function lockEdit(){ state.editUnlocked = false; renderTab(); }
+
+/* ============================================================
    SHELL / NAV
    ============================================================ */
 function renderHeader(){
@@ -518,6 +649,8 @@ function renderHeader(){
     document.getElementById("h-name").textContent = "Hi, " + p.name + " 👋";
     document.getElementById("h-meta").innerHTML = `Arrives ${esc(p.arrives)} · Departs ${esc(p.departs)}`;
   }
+  // Edit tab is Parent-only
+  document.getElementById("editTab").style.display = (state.persona==="Parent") ? "" : "none";
 }
 
 function renderTab(){
@@ -526,6 +659,7 @@ function renderTab(){
   if(state.tab==="today") html = renderToday();
   else if(state.tab==="week") html = renderWeek();
   else if(state.tab==="ref") html = renderRef();
+  else if(state.tab==="edit") html = renderEdit();
   v.innerHTML = html;
   document.querySelectorAll("nav.tabs button").forEach(b=>{
     b.classList.toggle("active", b.dataset.tab===state.tab);
@@ -545,6 +679,7 @@ function buildPicks(){
 }
 function pick(name){
   state.persona = name;
+  state.editUnlocked = false;
   localStorage.setItem(PERSONA_KEY, name);
   document.getElementById("overlay").style.display="none";
   boot();
