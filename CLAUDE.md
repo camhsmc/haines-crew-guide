@@ -183,3 +183,18 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
 - Verified anon CRUD through the new RLS (PATCH/POST/DELETE → 204/201) and that `hh_niece_config`
   rejects anon writes (401). PIN hash store/read plumbing verified end-to-end.
 - **Cam still needs to set the edit PIN** with the terminal command above before edit mode unlocks.
+
+### 2026-06-22 — Round 8 (Cam feedback)
+- **Today screen day stepper**: `‹ ›` to move between days + "Jump to today". Added `state.viewDate`
+  (the viewed date) separate from `state.today` (actual date); `dayNav()` / `stepDay()` / `goToday()`.
+- **Monday reworked** (Rella's flight cancelled): she now arrives 12:45 PM; stripped Monday's lunch
+  and everything before 12:45; added Pick up Rella → Costco run (with shopping list) → Oliver
+  practices his forms before the 6:15 promotion.
+- **Every day**: bedtime routine 7:00–8:30 PM on the schedule; explicit "Pick up boys from summer
+  school" item on each school day; added beds / girls' hair / morning-afternoon-evening checklists
+  to the Every Day reminders.
+- **Reference**: new "Chores & Time Off" card (clean+vacuum each child's room this week; an evening
+  out together is fine).
+- **Printable PDF**: `generate-pdf.mjs` fetches the live data and writes `crew-guide-print.html`;
+  rendered to `Crew-Guide.pdf` with headless Chrome (`--print-to-pdf`). Re-run both to refresh after
+  data changes. Brand-matched (navy/sand/gold), ~6 pages, also copied to ~/Downloads.
