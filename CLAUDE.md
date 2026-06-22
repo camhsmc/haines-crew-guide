@@ -198,3 +198,20 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
 - **Printable PDF**: `generate-pdf.mjs` fetches the live data and writes `crew-guide-print.html`;
   rendered to `Crew-Guide.pdf` with headless Chrome (`--print-to-pdf`). Re-run both to refresh after
   data changes. Brand-matched (navy/sand/gold), ~6 pages, also copied to ~/Downloads.
+
+### 2026-06-22 — Round 9 (Cam feedback)
+- **Meals moved into the schedule timeline.** Breakfast / Lunch / Dinner are now rows inside
+  `hh_niece_days.schedule` (time column shows "Breakfast"/"Lunch"/"Dinner"). Removed the separate
+  Meals section, the `hh_niece_lunches` + `hh_meal_plan` fetches, and all pescatarian banners/flags.
+  **Consequence:** dinners are no longer live-linked to Haines Harvest's `hh_meal_plan` — they're
+  baked into the schedule. `hh_niece_lunches` is now unused (left in the DB). To change a meal, edit
+  the day's `schedule` (via me/DB; schedule isn't in the in-app editor).
+- **No Rella-specific meal callouts** (per Cam — don't single her out). Dietary still appears once
+  in the PDF "Crew" roster only.
+- **Breakfast** = a standing assortment (hard-boiled eggs, pancakes, yogurt, toast, French toast,
+  scrambled eggs, avocado toast, cereal, oatmeal); **Friday** = French Toast Bake.
+- **Sunday added** (`2026-06-28`) — just Juliet's 6:00 AM departure. Guide span is now Mon–Sun.
+- Removed the **911** contact. Daily-rhythm morning line changed to "Wake the kids…" (they don't
+  wake on their own).
+- **PDF**: removed the meals block (now in the schedule); added "Add your own" write-in lines under
+  each day (PDF only); widened the time column; spans Mon–Sun. Now ~7 pages.
