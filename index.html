@@ -210,6 +210,16 @@
   .picks button.parent{background:rgba(255,255,255,.12);color:#fff}
   .picks button.parent .sub{color:#cdd8ea}
 
+  /* day stepper on Today */
+  .daynav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .daynav > button{
+    flex:0 0 auto;width:46px;height:46px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card);color:var(--navy);font-size:24px;font-weight:700;line-height:1;
+  }
+  .daynav-mid{flex:1;text-align:center}
+  .daynav-date{font-weight:700;color:var(--navy);font-size:15px}
+  .daynav-today{margin-top:2px;background:none;border:none;color:var(--gold);font-size:12px;font-weight:700}
+
   .loading{text-align:center;color:var(--muted);padding:40px 0}
   .err{background:#fbeaea;border:1px solid #e7b8b8;color:#9a2b2b;border-radius:12px;padding:14px;font-size:14px}
 </style>
@@ -255,7 +265,7 @@ const WEEK_START = "2026-06-22";   // Mon
 const WEEK_END   = "2026-06-27";   // Sat
 const PERSONA_KEY = "crew_persona";
 
-const state = { persona:null, tab:"today", today:null, data:null, editUnlocked:false };
+const state = { persona:null, tab:"today", today:null, viewDate:null, data:null, editUnlocked:false };
 
 /* ---- date helpers ---- */
 function todayCentral(){
@@ -265,6 +275,16 @@ function todayCentral(){
   return new Date().toLocaleDateString("en-CA",{timeZone:"America/Chicago"});
 }
 function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function shiftDate(d, delta){
+  const [y,m,day] = d.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, day + delta));
+  return dt.toISOString().slice(0,10);
+}
+function fmtDate(d){
+  const [y,m,day] = d.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, day));
+  return dt.toLocaleDateString("en-US",{timeZone:"UTC",weekday:"long",month:"short",day:"numeric"});
+}
 
 /* ---- Supabase fetch ---- */
 async function getJSON(path){
@@ -373,24 +393,39 @@ function dailyReminders(){
     </div>`;
 }
 
+function dayNav(){
+  const onToday = state.viewDate === state.today;
+  return `<div class="daynav">
+      <button onclick="stepDay(-1)" aria-label="Previous day">‹</button>
+      <div class="daynav-mid">
+        <div class="daynav-date">${esc(fmtDate(state.viewDate))}</div>
+        ${onToday ? "" : `<button class="daynav-today" onclick="goToday()">Jump to today</button>`}
+      </div>
+      <button onclick="stepDay(1)" aria-label="Next day">›</button>
+    </div>`;
+}
+function stepDay(delta){ state.viewDate = shiftDate(state.viewDate, delta); renderTab(); }
+function goToday(){ state.viewDate = state.today; renderTab(); }
+
 function renderToday(){
-  const day = state.data.days.find(d => d.day_date === state.today);
+  const d = state.viewDate;
+  const day = state.data.days.find(x => x.day_date === d);
   if(!day){
-    const first = state.data.days[0], last = state.data.days[state.data.days.length-1];
-    const before = state.today < first.day_date;
-    return `${pescBanner()}
+    const first = state.data.days[0];
+    const before = d < first.day_date;
+    return `${dayNav()}${pescBanner()}
       <div class="card">
-        <div class="eyebrow">Today</div>
+        <div class="eyebrow">${esc(fmtDate(d))}</div>
         <h2>${before?"The crew week hasn't started yet":"The crew week is wrapped"}</h2>
-        <p class="muted small">Today is ${esc(state.today)}. The guide covers Mon Jun 22 – Sat Jun 27. Tap <b>Week</b> to see every day.</p>
+        <p class="muted small">The guide covers Mon Jun 22 – Sat Jun 27. Use ‹ › or tap <b>Week</b>.</p>
       </div>`;
   }
-  return `${pescBanner()}${headsUp(day)}
+  return `${dayNav()}${pescBanner()}${headsUp(day)}
     <div class="card">
-      <div class="eyebrow">${esc(day.label)} · ${esc(state.today)}</div>
+      <div class="eyebrow">${esc(day.label)} · ${esc(d)}</div>
       ${day.summary?`<h2>${esc(day.summary)}</h2>`:""}
       ${scheduleSection(day)}
-      ${mealsSection(state.today)}
+      ${mealsSection(d)}
     </div>
     ${dailyReminders()}`;
 }
@@ -456,6 +491,12 @@ function renderRef(){
       <p class="small" style="margin:0 0 6px">Each kid starts every meal at <b>0 strikes</b>. Resets each meal. A strike for:</p>
       ${strikes}
       <p class="small" style="margin-top:10px"><b>3 strikes</b> = no dessert. &nbsp; <b>4 strikes</b> = excused + an extra chore tomorrow.</p>
+    </div>
+
+    <div class="card ref">
+      <div class="eyebrow">Chores &amp; Time Off</div>
+      <ul><li>This week's chore to help with: help each child clean and vacuum their room.</li>
+        <li>Take an evening out together if you want — movies, ice cream, downtown Hudson.</li></ul>
     </div>
 
     <div class="card ref">
@@ -700,6 +741,7 @@ async function boot(){
 
 async function init(){
   state.today = todayCentral();
+  state.viewDate = state.today;
   // load data once up front
   try{
     state.data = await loadData();
