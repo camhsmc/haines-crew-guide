@@ -31,7 +31,7 @@ const dayBlock = (day) => {
 };
 
 const peopleRows = people.map(p =>
-  `<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.arrives)}</td><td>${esc(p.departs)}</td><td>${esc(p.dietary||"")}</td></tr>`).join("");
+  `<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.arrives)}</td><td>${esc(p.departs)}</td></tr>`).join("");
 const locRows = locations.map(l => `<div class="ref-item"><b>${esc(l.name)}</b> — ${esc(l.address)}${l.note?` <span class="sub">(${esc(l.note)})</span>`:""}</div>`).join("");
 const conRows = contacts.map(c => `<div class="ref-item"><b>${esc(c.name)}</b> — ${esc(c.role)}${c.phone?` · ${esc(c.phone)}`:""}</div>`).join("");
 const remRows = reminders.map(r => `<li>${esc(r.body)}</li>`).join("");
@@ -66,13 +66,12 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Crew Guide
   .wlabel { font-size:8.5pt; color:#B8893B; text-transform:uppercase; letter-spacing:.5px; font-weight:bold; }
   .wl { border-bottom:1px solid #c9c2ad; height:18pt; }
 </style></head><body>
-  <div class="lead">Haines Harbor</div>
   <h1>Crew Guide</h1>
   <p class="intro">Mon Jun 22 – Sun Jun 28, 2026. Thanks for helping with the kids this week. Live version: camhsmc.github.io/haines-crew-guide</p>
 
   <section class="section">
     <h2>The Crew</h2>
-    <table class="peeps"><tr><td><b>Name</b></td><td><b>Arrives</b></td><td><b>Departs</b></td><td><b>Dietary</b></td></tr>${peopleRows}</table>
+    <table class="peeps"><tr><td><b>Name</b></td><td><b>Arrives</b></td><td><b>Departs</b></td></tr>${peopleRows}</table>
   </section>
 
   <section class="section">
