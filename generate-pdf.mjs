@@ -1,40 +1,32 @@
 // Builds a print-friendly HTML of the Crew Guide from the live Supabase data,
-// then it's rendered to PDF with headless Chrome (see the npm-free shell step).
+// then it's rendered to PDF with headless Chrome (see the shell step).
+// Meals live inside each day's schedule now, so this just renders the schedule.
 const SUPA = "https://optzbdbavpnxstpxrpbh.supabase.co/rest/v1";
 const KEY  = "sb_publishable_OujPUygbQI0CuYbrOub5kg_ExbErjAZ";
 const H = { apikey: KEY, Authorization: "Bearer " + KEY };
 const get = async (p) => (await fetch(`${SUPA}/${p}`, { headers: H })).json();
 const esc = (s) => (s==null?"":String(s)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 
-const [people, days, locations, contacts, lunches, reminders, dinners] = await Promise.all([
+const [people, days, locations, contacts, reminders] = await Promise.all([
   get("hh_niece_people?select=*&order=sort"),
   get("hh_niece_days?select=*&order=day_date"),
   get("hh_niece_locations?select=*&order=id"),
   get("hh_niece_contacts?select=*&order=sort"),
-  get("hh_niece_lunches?select=*&order=day_date"),
   get("hh_niece_reminders?select=*&order=sort"),
-  get("hh_meal_plan?select=meal_date,recipe_title,recipe_id&meal_type=eq.dinner&notes=ilike." + encodeURIComponent("NIECE WEEK*") + "&meal_date=gte.2026-06-22&meal_date=lte.2026-06-27&order=meal_date"),
 ]);
-const lunchBy = Object.fromEntries(lunches.map(l => [l.day_date, l]));
-const dinnerBy = Object.fromEntries(dinners.map(d => [d.meal_date, d]));
+
+// Blank lines for them to write in their own plans (PDF only).
+const writeIn = `<div class="writein"><div class="wlabel">Add your own:</div><div class="wl"></div><div class="wl"></div><div class="wl"></div></div>`;
 
 const dayBlock = (day) => {
   const items = (day.schedule||[]).map(s =>
     `<tr><td class="t">${esc(s.time)}</td><td>${esc(s.what)}${s.note?`<div class="sub">${esc(s.note)}</div>`:""}</td></tr>`).join("");
-  const l = lunchBy[day.day_date], d = dinnerBy[day.day_date];
-  let meals = "";
-  if(l){
-    const side=[l.veggie,l.fruit].filter(Boolean).join(" · ");
-    meals += `<div class="meal"><span class="mk">Lunch</span> ${esc(l.lunch)}${side?`<div class="sub">${esc(side)}</div>`:""}${l.rella_note?`<div class="sub">Rella: ${esc(l.rella_note)}</div>`:""}</div>`;
-  }
-  if(d) meals += `<div class="meal"><span class="mk">Dinner</span> ${esc(d.recipe_title)}${!d.recipe_id?` <span class="chip">no cooking</span>`:""}</div>`;
   return `<section class="day">
       <h2>${esc(day.label)} <span class="date">${esc(day.day_date)}</span></h2>
       ${day.summary?`<p class="summary">${esc(day.summary)}</p>`:""}
       ${day.heads_up?`<p class="heads">⚠ ${esc(day.heads_up)}</p>`:""}
-      <h3>Schedule</h3>
       <table class="sched">${items||`<tr><td colspan=2 class="sub">No fixed schedule.</td></tr>`}</table>
-      ${meals?`<h3>Meals</h3>${meals}`:""}
+      ${writeIn}
     </section>`;
 };
 
@@ -58,14 +50,11 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Crew Guide
   h3 { color:#1F3A5F; font-size:10pt; text-transform:uppercase; letter-spacing:.5px; margin:8pt 0 3pt; }
   .summary { font-style:italic; color:#444; margin:2pt 0 4pt; }
   .heads { background:#fdf3e0; border:1px solid #f0d9a8; padding:4pt 6pt; border-radius:4pt; font-size:10pt; margin:3pt 0; }
-  table.sched { width:100%; border-collapse:collapse; }
+  table.sched { width:100%; border-collapse:collapse; margin-top:3pt; }
   table.sched td { vertical-align:top; padding:2.5pt 0; border-bottom:1px solid #eee; }
-  td.t { width:120px; font-weight:bold; color:#1F3A5F; white-space:nowrap; padding-right:8pt; }
+  td.t { width:132px; font-weight:bold; color:#1F3A5F; padding-right:12pt; }
   .sub { color:#6b7790; font-size:9.5pt; }
-  .meal { margin:3pt 0; }
-  .mk { display:inline-block; min-width:48px; color:#B8893B; font-weight:bold; text-transform:uppercase; font-size:8.5pt; }
-  .chip { background:#eef1f6; color:#1F3A5F; font-size:8pt; padding:1pt 5pt; border-radius:8pt; }
-  .day { margin-bottom:12pt; page-break-inside:avoid; }
+  .day { margin-bottom:14pt; page-break-inside:avoid; }
   .section { page-break-inside:avoid; margin-bottom:12pt; }
   .peeps td { padding:3pt 6pt 3pt 0; border-bottom:1px solid #eee; font-size:10pt; vertical-align:top; }
   .ref-item { margin:2pt 0; font-size:10pt; }
@@ -73,10 +62,13 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Crew Guide
   li { margin-bottom:2pt; }
   .cols { column-count:2; column-gap:24pt; }
   .pagebreak { page-break-before:always; }
+  .writein { margin-top:6pt; }
+  .wlabel { font-size:8.5pt; color:#B8893B; text-transform:uppercase; letter-spacing:.5px; font-weight:bold; }
+  .wl { border-bottom:1px solid #c9c2ad; height:18pt; }
 </style></head><body>
   <div class="lead">Haines Harbor</div>
   <h1>Crew Guide</h1>
-  <p class="intro">Mon Jun 22 – Sat Jun 27, 2026. Thanks for helping with the kids this week. Live version: camhsmc.github.io/haines-crew-guide</p>
+  <p class="intro">Mon Jun 22 – Sun Jun 28, 2026. Thanks for helping with the kids this week. Live version: camhsmc.github.io/haines-crew-guide</p>
 
   <section class="section">
     <h2>The Crew</h2>
@@ -94,7 +86,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Crew Guide
   <section class="section">
     <h2>Daily Rhythm</h2>
     <h3>Mornings</h3>
-    <ul><li>Kids wake on their own → breakfast.</li><li>Boys to summer school: Theo ~8:15, Oliver ~8:50.</li><li>Sunscreen + water bottles.</li><li>Pickup: Oliver 12:00, Theo 12:15.</li><li>Girls stay home — easy play, library, backyard.</li></ul>
+    <ul><li>Wake the kids and get them started on breakfast.</li><li>Boys to summer school: Theo ~8:15, Oliver ~8:50.</li><li>Sunscreen + water bottles.</li><li>Pickup: Oliver 12:00, Theo 12:15.</li><li>Girls stay home — easy play, library, backyard.</li></ul>
     <h3>Evenings</h3>
     <ul><li>Dinner between 5:30 and 6:30.</li></ul>
   </section>
