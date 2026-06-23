@@ -233,6 +233,15 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
   to the cul-de-sac and set up a few yard games in the yard for the kids."
 - Both were data-only edits (live in the app immediately); PDF regenerated.
 
+### 2026-06-23 — Round 12
+- **Neighborhood picnic moved Tuesday → Thursday.** Swapped dinners so no day loses one: Tuesday is
+  now Marry Me Chicken Pasta, Thursday is the no-cook picnic. Updated BOTH systems — Crew app
+  (`hh_niece_days` Tue/Thu schedules) and Haines Harvest (`hh_meal_plan` ids 95↔97 recipe/notes).
+  Moved the "Help set up for the picnic" item (grill to cul-de-sac + yard games) to Thursday 5:30 PM.
+  Fixed Tuesday's summary (dropped the picnic mention).
+- Note: the picnic row keeps `recipe_id = null`, so in the **Harvest PWA** Thursday falls back to the
+  rotation template (no recipe card) — same behavior the picnic had on Tuesday before. Expected.
+
 ## Current status (end of 2026-06-23 session)
 - App live and building cleanly at https://camhsmc.github.io/haines-crew-guide/ (`.nojekyll` in place).
 - Printable PDF at `~/haines-crew-guide/Crew-Guide.pdf` (also `~/Downloads/`), regenerated this session.
