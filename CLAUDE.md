@@ -215,3 +215,29 @@ framing — is intentionally NOT displayed. The source `hh_meal_plan` rows are l
   wake on their own).
 - **PDF**: removed the meals block (now in the schedule); added "Add your own" write-in lines under
   each day (PDF only); widened the time column; spans Mon–Sun. Now ~7 pages.
+
+### 2026-06-22 — Round 10 + Pages build fix
+- Removed all **"Haines Harbor"** naming (app `<title>`, overlay logo, code comment; PDF lead line).
+- Removed the **Dietary column** from the PDF "Crew" roster (so dietary now appears nowhere user-facing).
+- **Fixed failing GitHub Pages builds.** `gh api .../pages/builds` showed recent builds `errored`
+  ("Page build failed") — Jekyll was choking, so Pages kept serving a STALE build even though
+  `git push` succeeded (raw.githubusercontent.com had the new file; the live site didn't). Added a
+  **`.nojekyll`** file (this is a plain static site) → builds now pass in ~15s.
+- **Deploy-check lesson:** confirm `gh api repos/camhsmc/haines-crew-guide/pages/builds/latest`
+  shows `status: built` AND poll the live URL for a content marker — don't trust that `git push`
+  alone means it's serving. Relates to [[feedback_wrangler_deploy_required]] (deploy ≠ push).
+
+### 2026-06-23 — Round 11
+- **Monday**: removed Breakfast (crew arrives midday; day now starts at 12:45 Pick up Rella).
+- **Tuesday**: added a 5:30 PM item before the picnic — "Help set up for the picnic: move the grill
+  to the cul-de-sac and set up a few yard games in the yard for the kids."
+- Both were data-only edits (live in the app immediately); PDF regenerated.
+
+## Current status (end of 2026-06-23 session)
+- App live and building cleanly at https://camhsmc.github.io/haines-crew-guide/ (`.nojekyll` in place).
+- Printable PDF at `~/haines-crew-guide/Crew-Guide.pdf` (also `~/Downloads/`), regenerated this session.
+- **Open / next:** (1) Cam still needs to set the edit-mode PIN via the terminal command in the Edit
+  Mode section before in-app editing unlocks. (2) Meals are no longer editable in-app (they live in
+  `schedule`); offer a schedule editor if he wants that back. (3) Rella's Sat 5:45 AM departure left
+  as-is (only her inbound flight changed). (4) PDF is a manual snapshot — re-run `generate-pdf.mjs`
+  + the headless-Chrome step after data changes.
